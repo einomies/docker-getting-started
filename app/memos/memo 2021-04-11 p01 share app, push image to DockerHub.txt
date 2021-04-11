@@ -1,0 +1,142 @@
+Share the application
+
+Now that we’ve built an image, let’s share it! To share Docker images, you have to use a Docker registry. The default registry is Docker Hub and is where all of the images we’ve used have come from.
+
+Docker ID
+
+A Docker ID allows you to access Docker Hub which is the world’s largest library and community for container images. Create a Docker ID for free if you don’t have one.
+
+Create a repo
+
+To push an image, we first need to create a repository on Docker Hub.
+
+Sign up and share images using Docker Hub.
+
+Sign in to Docker Hub.
+
+Click the Create Repository button.
+
+For the repo name, use getting-started. Make sure the Visibility is Public.
+
+Private repositories
+
+Did you know that Docker offers private repositories which allows you to restrict content to specific users or teams? Check out the details on the Docker pricing page.
+
+Click the Create button!
+
+If you look on the right-side of the page, you’ll see a section named Docker commands. This gives an example command that you will need to run to push to this repo.
+
+
+Push the image
+
+In the command line, try running the push command you see on Docker Hub. Note that your command will be using your namespace, not “docker”.
+
+ $ docker push docker/getting-started
+ The push refers to repository [docker.io/docker/getting-started]
+ An image does not exist locally with the tag: docker/getting-started
+
+Why did it fail? The push command was looking for an image named docker/getting-started, but didn’t find one. If you run docker image ls, you won’t see one either.
+
+To fix this, we need to “tag” our existing image we’ve built to give it another name.
+
+Login to the Docker Hub using the command docker login -u YOUR-USER-NAME.
+
+Use the docker tag command to give the getting-started image a new name. Be sure to swap out YOUR-USER-NAME with your Docker ID.
+
+ docker tag getting-started YOUR-USER-NAME/getting-started
+
+Now try your push command again. If you’re copying the value from Docker Hub, you can drop the tagname portion, as we didn’t add a tag to the image name. If you don’t specify a tag, Docker will use a tag called latest.
+
+ docker push YOUR-USER-NAME/getting-started
+
+**********************************************************************************************************************************************************************
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker ps -a
+CONTAINER ID   IMAGE               COMMAND                  CREATED          STATUS                      PORTS                                  NAMES
+9e7fa8125e10   getting-started     "docker-entrypoint.s…"   41 minutes ago   Up 16 minutes               0.0.0.0:3000->3000/tcp                 suspicious_chandrasekhar
+678f6c2541f9   mongo               "docker-entrypoint.s…"   2 weeks ago      Exited (255) 40 hours ago   0.0.0.0:27017-27019->27017-27019/tcp   mongodb
+1888c7d7ff05   docker101tutorial   "/docker-entrypoint.…"   4 weeks ago      Exited (255) 4 weeks ago    0.0.0.0:80->80/tcp                     docker-tutorial
+ce5d54893c11   alpine/git          "git clone https://g…"   4 weeks ago      Exited (0) 4 weeks ago                                             repo
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker image ls
+REPOSITORY                     TAG       IMAGE ID       CREATED        SIZE
+getting-started                latest    5b4dd1d11e38   15 hours ago   492MB
+mongo                          latest    f03be0dc25f8   2 weeks ago    448MB
+einomies26/docker101tutorial   latest    875151a54fc7   4 weeks ago    27.9MB
+docker101tutorial              latest    875151a54fc7   4 weeks ago    27.9MB
+hello-world                    latest    d1165f221234   5 weeks ago    13.3kB
+alpine/git                     latest    a939554ad0d0   7 weeks ago    25.1MB
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker image ls -a
+REPOSITORY                     TAG       IMAGE ID       CREATED        SIZE
+getting-started                latest    5b4dd1d11e38   15 hours ago   492MB
+mongo                          latest    f03be0dc25f8   2 weeks ago    448MB
+docker101tutorial              latest    875151a54fc7   4 weeks ago    27.9MB
+einomies26/docker101tutorial   latest    875151a54fc7   4 weeks ago    27.9MB
+hello-world                    latest    d1165f221234   5 weeks ago    13.3kB
+alpine/git                     latest    a939554ad0d0   7 weeks ago    25.1MB
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker push docker/getting-started
+Using default tag: latest
+The push refers to repository [docker.io/docker/getting-started]
+An image does not exist locally with the tag: docker/getting-started
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker login -u einomies26
+Password:
+Login Succeeded
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker tag getting-started einomies26/getting-started
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker push einomies26/getting-started
+Using default tag: latest
+The push refers to repository [docker.io/einomies26/getting-started]
+a66d8888af18: Pushed
+1ffe6010db42: Pushed
+e2cf5e59aa36: Pushed
+4be7a74d266c: Pushed
+a22f093310e2: Mounted from library/node
+6fefe650700f: Mounted from library/node
+0d6d58839dfa: Mounted from library/node
+2b2bcc6e6724: Mounted from library/node
+latest: digest: sha256:1cca97a8c787b3a2773c8db439c4a97f85f5be33b71d1081db627d64f7ae670a size: 2001
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>
+
+**********************************************************************************************************************************************************************
+Run the image on a new instance
+Now that our image has been built and pushed into a registry, let’s try running our app on a brand new instance that has never seen this container image! To do this, we will use Play with Docker.
+
+Open your browser to Play with Docker: https://labs.play-with-docker.com/
+
+Click Login and then select docker from the drop-down list.
+
+Connect with your Docker Hub account.
+
+Once you’re logged in, click on the ADD NEW INSTANCE option on the left side bar. If you don’t see it, make your browser a little wider. After a few seconds, a terminal window opens in your browser.
+
+In the terminal, start your freshly pushed app.
+
+ docker run -dp 3000:3000 YOUR-USER-NAME/getting-started
+
+You should see the image get pulled down and eventually start up!
+
+Click on the 3000 badge when it comes up and you should see the app with your modifications! Hooray! If the 3000 badge doesn’t show up, you can click on the “Open Port” button and type in 3000.
+
+**********************************************************************************************************************************************************************
+https://labs.play-with-docker.com/
+
+c1pbp5be_c1pbpigh550g00eqmig0
+
+IP
+192.168.0.28
+
+port
+3000
+
+ssh ip172-18-0-58-c1pbp5be75e000bfgasg@direct.labs.play-with-docker.com
+
+--> Todo app running at:
+http://ip172-18-0-58-c1pbp5be75e000bfgasg-3000.direct.labs.play-with-docker.com/
+
+
+**********************************************************************************************************************************************************************

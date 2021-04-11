@@ -1,0 +1,115 @@
+Update the source code
+
+In the src/static/js/app.js file, update line 56 to use the new empty text.
+ - <p className="text-center">No items yet! Add one above!</p>
+ + <p className="text-center">You have no todo items yet! Add one above!</p>
+
+Let’s build our updated version of the image, using the same command we used before.
+
+ docker build -t getting-started .
+
+****************************************************************************************************************************************************************
+ E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started\app>docker build -t getting-started .
+[+] Building 21.7s (11/11) FINISHED
+ => [internal] load build definition from Dockerfile                                                                                                       0.0s
+ => => transferring dockerfile: 32B                                                                                                                        0.0s
+ => [internal] load .dockerignore                                                                                                                          0.0s
+ => => transferring context: 2B                                                                                                                            0.0s
+ => [internal] load metadata for docker.io/library/node:12-alpine                                                                                          1.5s
+ => [auth] library/node:pull token for registry-1.docker.io                                                                                                0.0s
+ => [1/5] FROM docker.io/library/node:12-alpine@sha256:3423a5eea6a1151df079c5e94458dbd946cd53bcb75b47954a16af3137731ec7                                    0.0s
+ => [internal] load build context                                                                                                                          0.5s
+ => => transferring context: 691.78kB                                                                                                                      0.5s
+ => CACHED [2/5] RUN apk add --no-cache python g++ make                                                                                                    0.0s
+ => CACHED [3/5] WORKDIR /app                                                                                                                              0.0s
+ => [4/5] COPY . .                                                                                                                                         1.2s
+ => [5/5] RUN yarn install --production                                                                                                                   16.8s
+ => exporting to image                                                                                                                                     1.6s
+ => => exporting layers                                                                                                                                    1.6s
+ => => writing image sha256:5b4dd1d11e3811ec94c2938273efb626c108f368a30303dbcc157cf57e1dad18                                                               0.0s
+ => => naming to docker.io/library/getting-started                                                                                                         0.0s
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started\app>
+
+****************************************************************************************************************************************************************
+Let’s start a new container using the updated code.
+docker run -dp 3000:3000 getting-started
+
+****************************************************************************************************************************************************************
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started\app>docker run -dp 3000:3000 getting-started
+bea48e044d5502e50bfbaa556cc5efe694b6609800f07457c370ae1d82cbdb0b
+docker: Error response from daemon: driver failed programming external connectivity on endpoint affectionate_gould (fb1dc183164a03a1f6eafcfc2084ff45dd29aea7e7115433a6eb90be3d39b76b): Bind for 0.0.0.0:3000 failed: port is already allocated.
+
+****************************************************************************************************************************************************************
+Uh oh! You probably saw an error like this (the IDs will be different):
+docker: Error response from daemon: driver failed programming external connectivity on endpoint laughing_burnell 
+(bb242b2ca4d67eba76e79474fb36bb5125708ebdabd7f45c8eaf16caaabde9dd): Bind for 0.0.0.0:3000 failed: port is already allocated.
+
+So, what happened? We aren’t able to start the new container because our old container is still running.
+The reason this is a problem is because that container is using the host’s port 3000 and only one process on the machine (containers included)
+can listen to a specific port. To fix this, we need to remove the old container.
+
+Replace the old container
+
+To remove a container, it first needs to be stopped. Once it has stopped, it can be removed. We have two ways that we can remove the old container. Feel free to choose the path that you’re most comfortable with.
+
+Remove a container using the CLI
+Get the ID of the container by using the docker ps command.
+
+ docker ps
+
+Use the docker stop command to stop the container.
+ 
+ docker stop <the-container-id>
+
+Once the container has stopped, you can remove it by using the docker rm command.
+
+ docker rm <the-container-id>
+
+Note: You can stop and remove a container in a single command by adding the “force” flag to the docker rm command.
+For example: docker rm -f <the-container-id>
+
+Start the updated app container
+
+Now, start your updated app.
+
+ docker run -dp 3000:3000 getting-started
+
+Refresh your browser on http://localhost:3000 and you should see your updated help text!
+
+****************************************************************************************************************************************************************
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker ps -a
+CONTAINER ID   IMAGE               COMMAND                  CREATED        STATUS                      PORTS                                  NAMES
+bea48e044d55   getting-started     "docker-entrypoint.s…"   14 hours ago   Created                                                            affectionate_gould678f6c2541f9   mongo               "docker-entrypoint.s…"   13 days ago    Exited (255) 39 hours ago   0.0.0.0:27017-27019->27017-27019/tcp   mongodb
+1888c7d7ff05   docker101tutorial   "/docker-entrypoint.…"   4 weeks ago    Exited (255) 4 weeks ago    0.0.0.0:80->80/tcp                     docker-tutorial
+ce5d54893c11   alpine/git          "git clone https://g…"   4 weeks ago    Exited (0) 4 weeks ago                                             repo
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker run -dp 3000:3000 getting-started
+9e7fa8125e10e3c0d84b694cbcec0d9d31b4421e33f38bb3acc6ee94cdfe976e
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker ps -a
+CONTAINER ID   IMAGE               COMMAND                  CREATED         STATUS                      PORTS                                  NAMES
+9e7fa8125e10   getting-started     "docker-entrypoint.s…"   3 seconds ago   Up 2 seconds                0.0.0.0:3000->3000/tcp                 suspicious_chandrasekhar
+bea48e044d55   getting-started     "docker-entrypoint.s…"   14 hours ago    Created                                                            affectionate_gould
+678f6c2541f9   mongo               "docker-entrypoint.s…"   13 days ago     Exited (255) 39 hours ago   0.0.0.0:27017-27019->27017-27019/tcp   mongodb
+1888c7d7ff05   docker101tutorial   "/docker-entrypoint.…"   4 weeks ago     Exited (255) 4 weeks ago    0.0.0.0:80->80/tcp                     docker-tutorial
+ce5d54893c11   alpine/git          "git clone https://g…"   4 weeks ago     Exited (0) 4 weeks ago                                             repo
+
+*** Removed container "affectionate_gould" with Docker desktop
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker ps -a
+CONTAINER ID   IMAGE               COMMAND                  CREATED         STATUS                      PORTS                                  NAMES
+9e7fa8125e10   getting-started     "docker-entrypoint.s…"   4 minutes ago   Up 4 minutes                0.0.0.0:3000->3000/tcp                 suspicious_chandrasekhar
+678f6c2541f9   mongo               "docker-entrypoint.s…"   13 days ago     Exited (255) 39 hours ago   0.0.0.0:27017-27019->27017-27019/tcp   mongodb
+1888c7d7ff05   docker101tutorial   "/docker-entrypoint.…"   4 weeks ago     Exited (255) 4 weeks ago    0.0.0.0:80->80/tcp                     docker-tutorial
+ce5d54893c11   alpine/git          "git clone https://g…"   4 weeks ago     Exited (0) 4 weeks ago                                             repo
+****************************************************************************************************************************************************************
+
+
+****************************************************************************************************************************************************************
+
+
+****************************************************************************************************************************************************************
+
+

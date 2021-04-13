@@ -1,0 +1,232 @@
+https://docs.docker.com/get-started/05_persisting_data/
+
+In case you didn’t notice, our todo list is being wiped clean every single time we launch the container. Why is this? Let’s dive into how the container is working.
+
+The container’s filesystem
+
+When a container runs, it uses the various layers from an image for its filesystem. Each container also gets its own “scratch space” to create/update/remove files. Any changes won’t be seen in another container, even if they are using the same image.
+
+To see this in action, we’re going to start two containers and create a file in each. What you’ll see is that the files created in one container aren’t available in another.
+
+Start a ubuntu container that will create a file named /data.txt with a random number between 1 and 10000.
+
+ docker run -d ubuntu bash -c "shuf -i 1-10000 -n 1 -o /data.txt && tail -f /dev/null"
+
+In case you’re curious about the command, we’re starting a bash shell and invoking two commands (why we have the &&). The first portion picks a single random number and writes it to /data.txt. The second command is simply watching a file to keep the container running.
+
+************************************************************************************************************************************************************************************
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker run -d ubuntu bash -c "shuf -i 1-10000 -n 1 -o /data.txt && tail -f /dev/null"
+Unable to find image 'ubuntu:latest' locally
+latest: Pulling from library/ubuntu
+a70d879fa598: Pull complete
+c4394a92d1f8: Pull complete
+10e6159c56c0: Pull complete
+Digest: sha256:3c9c713e0979e9bd6061ed52ac1e9e1f246c9495aa063619d9d695fb8039aa1f
+Status: Downloaded newer image for ubuntu:latest
+c20edbece86ab8bf83992cb0f7fb4db7945c8d07fef5da4b0d343abf826d81e9
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker ps -a
+CONTAINER ID   IMAGE               COMMAND                  CREATED          STATUS                      PORTS                                  NAMES
+c20edbece86a   ubuntu              "bash -c 'shuf -i 1-…"   23 seconds ago   Up 22 seconds                                                      beautiful_goldberg
+9e7fa8125e10   getting-started     "docker-entrypoint.s…"   5 hours ago      Exited (0) 48 minutes ago                                          suspicious_chandrasekhar
+678f6c2541f9   mongo               "docker-entrypoint.s…"   2 weeks ago      Exited (255) 44 hours ago   0.0.0.0:27017-27019->27017-27019/tcp   mongodb
+1888c7d7ff05   docker101tutorial   "/docker-entrypoint.…"   4 weeks ago      Exited (255) 4 weeks ago    0.0.0.0:80->80/tcp                     docker-tutorial
+ce5d54893c11   alpine/git          "git clone https://g…"   4 weeks ago      Exited (0) 4 weeks ago                                             repo
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>
+
+************************************************************************************************************************************************************************************
+Validate we can see the output by execing into the container. To do so, open the Dashboard and click the first action of the container that is running the ubuntu image.
+
+You will see a terminal that is running a shell in the ubuntu container. Run the following command to see the content of the /data.txt file. Close this terminal afterwards again.
+
+ cat /data.txt
+
+If you prefer the command line you can use the docker exec command to do the same. You need to get the container’s ID (use docker ps to get it) and get the content with the following command.
+
+ docker exec <container-id> cat /data.txt
+
+You should see a random number!
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker ps -a
+CONTAINER ID   IMAGE               COMMAND                  CREATED         STATUS                      PORTS                                  NAMES
+c20edbece86a   ubuntu              "bash -c 'shuf -i 1-…"   9 minutes ago   Up 9 minutes                                                       beautiful_goldberg
+9e7fa8125e10   getting-started     "docker-entrypoint.s…"   5 hours ago     Exited (0) 58 minutes ago                                          suspicious_chandrasekhar
+678f6c2541f9   mongo               "docker-entrypoint.s…"   2 weeks ago     Exited (255) 44 hours ago   0.0.0.0:27017-27019->27017-27019/tcp   mongodb
+1888c7d7ff05   docker101tutorial   "/docker-entrypoint.…"   4 weeks ago     Exited (255) 4 weeks ago    0.0.0.0:80->80/tcp                     docker-tutorial
+ce5d54893c11   alpine/git          "git clone https://g…"   4 weeks ago     Exited (0) 4 weeks ago                                             repo
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker exec c20e cat /data.txt
+304
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>
+
+************************************************************************************************************************************************************************************
+Now, let’s start another ubuntu container (the same image) and we’ll see we don’t have the same file.
+
+ docker run -it ubuntu ls /
+
+And look! There’s no data.txt file there! That’s because it was written to the scratch space for only the first container.
+
+Go ahead and remove the first container using the docker rm -f command.
+
+************************************************************************************************************************************************************************************
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker ps -a
+CONTAINER ID   IMAGE               COMMAND                  CREATED          STATUS                         PORTS                                  NAMES
+c20edbece86a   ubuntu              "bash -c 'shuf -i 1-…"   13 minutes ago   Up 13 minutes                                                         beautiful_goldberg
+9e7fa8125e10   getting-started     "docker-entrypoint.s…"   5 hours ago      Exited (0) About an hour ago                                          suspicious_chandrasekhar
+678f6c2541f9   mongo               "docker-entrypoint.s…"   2 weeks ago      Exited (255) 44 hours ago      0.0.0.0:27017-27019->27017-27019/tcp   mongodb
+1888c7d7ff05   docker101tutorial   "/docker-entrypoint.…"   4 weeks ago      Exited (255) 4 weeks ago       0.0.0.0:80->80/tcp                     docker-tutorial
+ce5d54893c11   alpine/git          "git clone https://g…"   4 weeks ago      Exited (0) 4 weeks ago                                                repo
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker run -it ubuntu ls /
+bin   dev  home  lib32  libx32  mnt  proc  run   srv  tmp  var
+boot  etc  lib   lib64  media   opt  root  sbin  sys  usr
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker ps -a
+CONTAINER ID   IMAGE               COMMAND                  CREATED          STATUS                         PORTS                                  NAMES
+95b5e754d3f7   ubuntu              "ls /"                   3 seconds ago    Exited (0) 2 seconds ago                                              zen_chatterjee
+c20edbece86a   ubuntu              "bash -c 'shuf -i 1-…"   14 minutes ago   Up 14 minutes                                                         beautiful_goldberg
+9e7fa8125e10   getting-started     "docker-entrypoint.s…"   5 hours ago      Exited (0) About an hour ago                                          suspicious_chandrasekhar
+678f6c2541f9   mongo               "docker-entrypoint.s…"   2 weeks ago      Exited (255) 44 hours ago      0.0.0.0:27017-27019->27017-27019/tcp   mongodb
+1888c7d7ff05   docker101tutorial   "/docker-entrypoint.…"   4 weeks ago      Exited (255) 4 weeks ago       0.0.0.0:80->80/tcp                     docker-tutorial
+ce5d54893c11   alpine/git          "git clone https://g…"   4 weeks ago      Exited (0) 4 weeks ago                                                repo
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>
+
+************************************************************************************************************************************************************************************
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker ps -a
+CONTAINER ID   IMAGE               COMMAND                  CREATED        STATUS                     PORTS                                  NAMES
+03d30705928d   ubuntu              "/bin/bash"              2 hours ago    Up 2 hours                                                        gifted_haibt
+c20edbece86a   ubuntu              "bash -c 'shuf -i 1-…"   5 hours ago    Up 5 hours                                                        beautiful_goldberg
+9e7fa8125e10   getting-started     "docker-entrypoint.s…"   10 hours ago   Exited (0) 6 hours ago                                            suspicious_chandrasekhar
+678f6c2541f9   mongo               "docker-entrypoint.s…"   2 weeks ago    Exited (255) 2 days ago    0.0.0.0:27017-27019->27017-27019/tcp   mongodb
+1888c7d7ff05   docker101tutorial   "/docker-entrypoint.…"   4 weeks ago    Exited (255) 4 weeks ago   0.0.0.0:80->80/tcp                     docker-tutorial
+ce5d54893c11   alpine/git          "git clone https://g…"   4 weeks ago    Exited (0) 4 weeks ago                                            repo
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker exec -it c20 /bin/sh
+# ls -la
+total 60
+drwxr-xr-x   1 root root 4096 Apr 11 12:58 .
+drwxr-xr-x   1 root root 4096 Apr 11 12:58 ..
+-rwxr-xr-x   1 root root    0 Apr 11 12:58 .dockerenv
+lrwxrwxrwx   1 root root    7 Apr  1 01:23 bin -> usr/bin
+drwxr-xr-x   2 root root 4096 Apr 15  2020 boot
+-rw-r--r--   1 root root    4 Apr 11 12:58 data.txt
+drwxr-xr-x   5 root root  340 Apr 11 12:58 dev
+drwxr-xr-x   1 root root 4096 Apr 11 12:58 etc
+drwxr-xr-x   2 root root 4096 Apr 15  2020 home
+lrwxrwxrwx   1 root root    7 Apr  1 01:23 lib -> usr/lib
+lrwxrwxrwx   1 root root    9 Apr  1 01:23 lib32 -> usr/lib32
+lrwxrwxrwx   1 root root    9 Apr  1 01:23 lib64 -> usr/lib64
+lrwxrwxrwx   1 root root   10 Apr  1 01:23 libx32 -> usr/libx32
+drwxr-xr-x   2 root root 4096 Apr  1 01:23 media
+drwxr-xr-x   2 root root 4096 Apr  1 01:23 mnt
+drwxr-xr-x   2 root root 4096 Apr  1 01:23 opt
+dr-xr-xr-x 144 root root    0 Apr 11 12:58 proc
+drwx------   2 root root 4096 Apr  1 01:26 root
+drwxr-xr-x   1 root root 4096 Apr  3 00:53 run
+lrwxrwxrwx   1 root root    8 Apr  1 01:23 sbin -> usr/sbin
+drwxr-xr-x   2 root root 4096 Apr  1 01:23 srv
+dr-xr-xr-x  11 root root    0 Apr 11 12:58 sys
+drwxrwxrwt   2 root root 4096 Apr  1 01:26 tmp
+drwxr-xr-x   1 root root 4096 Apr  1 01:23 usr
+drwxr-xr-x   1 root root 4096 Apr  1 01:26 var
+# exit
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker exec -it 03d3 /bin/sh
+# ls -la
+total 56
+drwxr-xr-x   1 root root 4096 Apr 11 16:11 .
+drwxr-xr-x   1 root root 4096 Apr 11 16:11 ..
+-rwxr-xr-x   1 root root    0 Apr 11 16:11 .dockerenv
+lrwxrwxrwx   1 root root    7 Apr  1 01:23 bin -> usr/bin
+drwxr-xr-x   2 root root 4096 Apr 15  2020 boot
+drwxr-xr-x   5 root root  360 Apr 11 16:15 dev
+drwxr-xr-x   1 root root 4096 Apr 11 16:11 etc
+drwxr-xr-x   2 root root 4096 Apr 15  2020 home
+lrwxrwxrwx   1 root root    7 Apr  1 01:23 lib -> usr/lib
+lrwxrwxrwx   1 root root    9 Apr  1 01:23 lib32 -> usr/lib32
+lrwxrwxrwx   1 root root    9 Apr  1 01:23 lib64 -> usr/lib64
+lrwxrwxrwx   1 root root   10 Apr  1 01:23 libx32 -> usr/libx32
+drwxr-xr-x   2 root root 4096 Apr  1 01:23 media
+drwxr-xr-x   2 root root 4096 Apr  1 01:23 mnt
+drwxr-xr-x   2 root root 4096 Apr  1 01:23 opt
+dr-xr-xr-x 145 root root    0 Apr 11 16:15 proc
+drwx------   1 root root 4096 Apr 11 16:11 root
+drwxr-xr-x   1 root root 4096 Apr  3 00:53 run
+lrwxrwxrwx   1 root root    8 Apr  1 01:23 sbin -> usr/sbin
+drwxr-xr-x   2 root root 4096 Apr  1 01:23 srv
+dr-xr-xr-x  11 root root    0 Apr 11 16:15 sys
+drwxrwxrwt   2 root root 4096 Apr  1 01:26 tmp
+drwxr-xr-x   1 root root 4096 Apr  1 01:23 usr
+drwxr-xr-x   1 root root 4096 Apr  1 01:26 var
+# exit
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>
+
+************************************************************************************************************************************************************************************
+Persist the todo data
+
+By default, the todo app stores its data in a SQLite Database at /etc/todos/todo.db. If you’re not familiar with SQLite, no worries! It’s simply a relational database in which all of the data is stored in a single file. While this isn’t the best for large-scale applications, it works for small demos. We’ll talk about switching this to a different database engine later.
+
+With the database being a single file, if we can persist that file on the host and make it available to the next container, it should be able to pick up where the last one left off. By creating a volume and attaching (often called “mounting”) it to the directory the data is stored in, we can persist the data. As our container writes to the todo.db file, it will be persisted to the host in the volume.
+
+As mentioned, we are going to use a named volume. Think of a named volume as simply a bucket of data. Docker maintains the physical location on the disk and you only need to remember the name of the volume. Every time you use the volume, Docker will make sure the correct data is provided.
+
+Create a volume by using the docker volume create command.
+
+ docker volume create todo-db
+
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker volume create todo-db
+todo-db
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker ps -a
+CONTAINER ID   IMAGE               COMMAND                  CREATED        STATUS                     PORTS                                  NAMES
+9e7fa8125e10   getting-started     "docker-entrypoint.s…"   11 hours ago   Exited (0) 7 hours ago                                            suspicious_chandrasekhar
+678f6c2541f9   mongo               "docker-entrypoint.s…"   2 weeks ago    Exited (255) 2 days ago    0.0.0.0:27017-27019->27017-27019/tcp   mongodb
+1888c7d7ff05   docker101tutorial   "/docker-entrypoint.…"   4 weeks ago    Exited (255) 4 weeks ago   0.0.0.0:80->80/tcp                     docker-tutorial
+ce5d54893c11   alpine/git          "git clone https://g…"   4 weeks ago    Exited (0) 4 weeks ago                                            repo
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker volume ls -a
+unknown shorthand flag: 'a' in -a
+See 'docker volume ls --help'.
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started>docker volume ls
+DRIVER    VOLUME NAME
+local     2e548a9a3e60542c989722e83a31968f85b129e69b97fec20af2d6d3ae08cc81
+local     032a867c92dbd88b2864b2cfa67f6f37c5a08c464d4c28f51c6cebd4b9ea08cb
+local     694c0fe1de04956c96a7061f7c30da214bd69fe9fa6c05c4e34f7b993f71fc93
+local     0801d81d7b149ae23999c7efa2fd92084565e991cdabb6db5da9ef55ed1b386b
+local     9295ac8d870ab85369b1e8a44c5d8c3e30fc427bcaab2d7044a8702db7d49e53
+local     77322efe77dd8b789ec136917e15094a7abef80f89bbbf4ec59a9532800fac19
+local     a19fef78f3111abd99320b21e10b05e3b54b2513b5f2e109d02aa0e2a2fe1639
+local     eac50a131678e18e87964062f253fc3d31eb920d7e2a459c11463bdb912147cc
+local     ecdc9ed3452c3af7ac617238a915dcc5bb2028e618a569c0ed5f8d6430f8ad03
+local     todo-db
+
+************************************************************************************************************************************************************************************
+Start the todo app container, but add the -v flag to specify a volume mount. We will use the named volume and mount it to /etc/todos, which will capture all files created at the path.
+
+ docker run -dp 3000:3000 -v todo-db:/etc/todos getting-started
+
+Once the container starts up, open the app and add a few items to your todo list.
+
+
+
+************************************************************************************************************************************************************************************
+
+
+************************************************************************************************************************************************************************************
+
+
+************************************************************************************************************************************************************************************
+
+
+************************************************************************************************************************************************************************************
+
+
+************************************************************************************************************************************************************************************

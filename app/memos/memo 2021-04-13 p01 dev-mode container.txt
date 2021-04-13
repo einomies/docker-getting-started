@@ -1,0 +1,144 @@
+https://docs.docker.com/get-started/06_bind_mounts/
+
+Use bind mounts
+
+In the previous chapter, we talked about and used a named volume to persist the data in our database. Named volumes are great if we simply want to store data, as we don’t have to worry about where the data is stored.
+
+With bind mounts, we control the exact mountpoint on the host. We can use this to persist data, but it’s often used to provide additional data into containers. When working on an application, we can use a bind mount to mount our source code into the container to let it see code changes, respond, and let us see the changes right away.
+
+For Node-based applications, nodemon is a great tool to watch for file changes and then restart the application. There are equivalent tools in most other languages and frameworks.
+
+Quick volume type comparisons
+Bind mounts and named volumes are the two main types of volumes that come with the Docker engine. However, additional volume drivers are available to support other uses cases (SFTP, Ceph, NetApp, S3, and more).
+
+ 	Named Volumes	Bind Mounts
+Host Location	Docker chooses	You control
+Mount Example (using -v)	my-volume:/usr/local/data	/path/to/data:/usr/local/data
+Populates new volume with container contents	Yes	No
+Supports Volume Drivers	Yes	No
+
+
+Start a dev-mode container
+
+To run our container to support a development workflow, we will do the following:
+
+Mount our source code into the container
+Install all dependencies, including the “dev” dependencies
+Start nodemon to watch for filesystem changes
+So, let’s do it!
+
+Make sure you don’t have any previous getting-started containers running.
+
+Run the following command. We’ll explain what’s going on afterwards:
+
+ docker run -dp 3000:3000 \
+     -w /app -v "$(pwd):/app" \
+     node:12-alpine \
+     sh -c "yarn install && yarn run dev"
+
+If you are using PowerShell then use this command:
+
+ docker run -dp 3000:3000 `
+     -w /app -v "$(pwd):/app" `
+     node:12-alpine `
+     sh -c "yarn install && yarn run dev"
+
+-dp 3000:3000 - same as before. Run in detached (background) mode and create a port mapping
+-w /app - sets the “working directory” or the current directory that the command will run from
+-v "$(pwd):/app" - bind mount the current directory from the host in the container into the /app directory
+node:12-alpine - the image to use. Note that this is the base image for our app from the Dockerfile
+sh -c "yarn install && yarn run dev" - the command. We’re starting a shell using sh (alpine doesn’t have bash) and running yarn install to install all dependencies and then running yarn run dev. If we look in the package.json, we’ll see that the dev script is starting nodemon.
+
+You can watch the logs using docker logs -f <container-id>. You’ll know you’re ready to go when you see this:
+
+ docker logs -f <container-id>
+ $ nodemon src/index.js
+ [nodemon] 1.19.2
+ [nodemon] to restart at any time, enter `rs`
+ [nodemon] watching dir(s): *.*
+ [nodemon] starting `node src/index.js`
+ Using sqlite database at /etc/todos/todo.db
+ Listening on port 3000
+
+When you’re done watching the logs, exit out by hitting Ctrl+C.
+
+Now, let’s make a change to the app. In the src/static/js/app.js file, let’s change the “Add Item” button to simply say “Add”. This change will be on line 109:
+ - {submitting ? 'Adding...' : 'Add Item'}
+ + {submitting ? 'Adding...' : 'Add'}
+
+Simply refresh the page (or open it) and you should see the change reflected in the browser almost immediately. It might take a few seconds for the Node server to restart, so if you get an error, just try refreshing after a few seconds.
+
+Screenshot of updated label for Add button
+
+Feel free to make any other changes you’d like to make.
+
+When you’re done, stop the container and build your new image using docker build -t getting-started ..
+
+Using bind mounts is very common for local development setups. The advantage is that the dev machine doesn’t need to have all of the build tools and environments installed. With a single docker run command, the dev environment is pulled and ready to go. We’ll talk about Docker Compose in a future step, as this will help simplify our commands (we’re already getting a lot of flags).
+
+************************************************************************************************************************************************************************************
+
+https://github.com/docker/getting-started/issues/76
+
+Eino K 13.4.2021
+Giving the run command using PowerShell:
+docker run -dp 3000:3000 -w /app -v "$(pwd):/app" node:12-alpine sh -c "cd app && yarn install && yarn run dev"
+
+PS E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started> docker run -dp 3000:3000 -w /app -v "$(pwd):/app" node:12-alpine sh -c "cd app && yarn install && yarn run dev"
+b408cabd2dab0a2d1b4ec7404c2661856e7ccc192881b6e29c9672ed3fd6d63c
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started\app>docker container ps -a
+CONTAINER ID   IMAGE               COMMAND                  CREATED              STATUS                     PORTS                                  NAMES
+b408cabd2dab   node:12-alpine      "docker-entrypoint.s…"   About a minute ago   Up About a minute          0.0.0.0:3000->3000/tcp                 distracted_darwin
+678f6c2541f9   mongo               "docker-entrypoint.s…"   2 weeks ago          Exited (255) 4 days ago    0.0.0.0:27017-27019->27017-27019/tcp   mongodb
+1888c7d7ff05   docker101tutorial   "/docker-entrypoint.…"   4 weeks ago          Exited (255) 4 weeks ago   0.0.0.0:80->80/tcp                     docker-tutorial
+
+Checking the logs
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started\app>docker logs -f b408
+yarn install v1.22.5
+warning package-lock.json found. Your project contains lock files generated by tools other than Yarn. It is advised not to mix package managers in order to avoid resolution inconsistencies caused by unsynchronized lock files. To clear this warning, remove package-lock.json.
+[1/4] Resolving packages...
+[2/4] Fetching packages...
+info fsevents@1.2.9: The platform "linux" is incompatible with this module.
+info "fsevents@1.2.9" is an optional dependency and failed compatibility check. Excluding it from installation.
+[3/4] Linking dependencies...
+[4/4] Building fresh packages...
+Done in 95.42s.
+yarn run v1.22.5
+$ nodemon src/index.js
+[nodemon] 1.19.2
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching dir(s): *.*
+[nodemon] starting `node src/index.js`
+Using sqlite database at /etc/todos/todo.db
+Listening on port 3000
+
+E:\workspaces\opinnot-2021-JAMK\YTSP0100 Modern Software Development\Docker\docker-getting-started\app>docker exec -it b408 /bin/sh
+/app #
+/app # ls -la
+total 4
+drwxrwxrwx    1 root     root          4096 Apr 13 17:44 .
+drwxr-xr-x    1 root     root          4096 Apr 13 19:26 ..
+drwxrwxrwx    1 root     root          4096 Apr 11 09:18 .git
+drwxrwxrwx    1 root     root          4096 Apr 10 11:05 .github
+-rwxrwxrwx    1 root     root            12 Apr 10 11:08 .gitignore
+drwxrwxrwx    1 root     root          4096 Apr 10 11:50 app
+drwxr-xr-x    1 root     root          4096 Apr 13 17:44 node_modules
+-rw-r--r--    1 root     root            86 Apr 13 17:44 yarn.lock
+/app # cd app/
+/app/app # ls -la
+total 412
+drwxrwxrwx    1 root     root          4096 Apr 10 11:50 .
+drwxrwxrwx    1 root     root          4096 Apr 13 17:44 ..
+-rwxrwxrwx    1 root     root           146 Apr 10 11:39 Dockerfile
+drwxrwxrwx    1 root     root          4096 Apr 13 16:56 memos
+drwxrwxrwx    1 root     root          4096 Apr 13 19:28 node_modules
+-rwxrwxrwx    1 root     root        230103 Apr 10 11:33 package-lock.json
+-rwxrwxrwx    1 root     root           657 Apr 10 11:05 package.json
+drwxrwxrwx    1 root     root          4096 Apr 10 11:05 spec
+drwxrwxrwx    1 root     root          4096 Apr 10 11:05 src
+-rwxrwxrwx    1 root     root        183766 Apr 10 11:05 yarn.lock
+/app/app #
+
+************************************************************************************************************************************************************************************
